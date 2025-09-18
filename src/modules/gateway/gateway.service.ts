@@ -6,7 +6,7 @@ import { UpdateGatewayDto } from './dto/update-gateway.dto';
 @Injectable()
 export class GatewayService {
   create(createGatewayDto: CreateGatewayDto) {
-    return 'This action adds a new gateway';
+    return `This action adds a new gateway ${JSON.stringify(createGatewayDto)}`;
   }
 
   findAll() {
@@ -18,7 +18,7 @@ export class GatewayService {
   }
 
   update(id: number, updateGatewayDto: UpdateGatewayDto) {
-    return `This action updates a #${id} gateway`;
+    return `This action updates a #${id} gateway ${JSON.stringify(updateGatewayDto)}`;
   }
 
   remove(id: number) {
