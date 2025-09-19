@@ -5,7 +5,7 @@ const config: Config = {
   testEnvironment: 'node',
 
   // ищем тесты только в src
-  roots: ['<rootDir>/src'],
+  roots: ['<rootDir>/test'],
   testRegex: '.*\\.spec\\.ts$',
   moduleFileExtensions: ['ts', 'js', 'json'],
 
