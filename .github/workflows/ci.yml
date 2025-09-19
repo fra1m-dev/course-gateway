@@ -66,20 +66,20 @@ jobs:
           script: |
             const fs = require('fs');
             const crypto = require('crypto');
-      
+
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
-      
+
             // --- входной файл
             if (!fs.existsSync('todos.md')) { core.info('todos.md not found. Skip'); return; }
             const md = fs.readFileSync('todos.md','utf8').trim();
             if (!md) { core.info('todos.md is empty. Skip'); return; }
-      
+
             // --- секции
             const idx = md.indexOf('### FIXMEs');
             const todosBlock = idx === -1 ? md : md.slice(0, idx);
             const fixmesBlock = idx === -1 ? '' : md.slice(idx);
-      
+
             // --- парсер таблиц
             function parse(block){
               const rows=[];
@@ -91,7 +91,7 @@ jobs:
             }
             const todos = parse(todosBlock);
             const fixmes = parse(fixmesBlock);
-      
+
             // --- лейблы (мягко)
             async function ensureLabel(name,color,desc){
               try { await github.rest.issues.getLabel({ owner, repo, name }); }
@@ -103,16 +103,14 @@ jobs:
             await ensureLabel('todo', '0E8A16', 'Auto-created from TODOs');
             await ensureLabel('fix',  'D73A4A', 'Auto-created from FIXMEs');
             await ensureLabel('bug',  'B60205', 'Bug');
-            await ensureLabel('type: task', '0366D6', 'Task type');
-            await ensureLabel('type: bug',  'D93F0B', 'Bug type');
-      
+
             // --- открытый milestone (первый)
             let milestoneNumber = undefined;
             try {
               const { data: mls } = await github.rest.issues.listMilestones({ owner, repo, state: 'open', per_page: 1 });
               milestoneNumber = mls[0]?.number;
             } catch (e) { core.warning(`Milestone lookup failed: ${e.message}`); }
-      
+
             // --- assignee = автор пуша, если коллаборатор
             const assignee = context.actor;
             let canAssign = true;
@@ -121,27 +119,27 @@ jobs:
             } catch {
               canAssign = false;
             }
-      
+
             // --- стабильный ключ по записи
             const makeKey = (kind, it) =>
               crypto.createHash('sha1').update(`${kind}|${it.file}|${it.line}`).digest('hex');
-      
+
             // --- поиск issue по ключу в body
             async function findByKey(key) {
               const q = `repo:${owner}/${repo} is:issue in:body "${key}"`;
               const res = await github.rest.search.issuesAndPullRequests({ q, per_page: 10 });
               return res.data.items.find(i => i.state === 'open');
             }
-      
+
             // --- ссылки на конкретный коммит
             const repoBase = `https://github.com/${owner}/${repo}/blob/${context.sha}/`;
             const abs = (link)=> link.startsWith('http') ? link : `${repoBase}${link}`;
-      
+
             // --- создать/обновить по ключу
             async function upsert(items, coreLabels, kind, typeLabel){
               for (const it of items) {
                 const key = makeKey(kind, it);
-                const title = `[${kind}] ${it.file}:${it.line} — ${it.text}`.slice(0,250);
+                const title = `[${kind}] ${it.text}`.slice(0,250);
                 const body = [
                   `**Type:** ${kind}`,
                   ``,
@@ -152,10 +150,10 @@ jobs:
                   ``,
                   `<!-- todo-key:${key} -->` // 👈 невидимый якорь для идемпотентности
                 ].join('\n');
-      
+
                 const existing = await findByKey(key);
                 const labels = [...new Set([...coreLabels, typeLabel])];
-      
+
                 if (existing) {
                   await github.rest.issues.update({
                     owner, repo, issue_number: existing.number,
@@ -170,7 +168,7 @@ jobs:
                 }
               }
             }
-      
+
             await upsert(todos, ['todo'], 'todo', 'type: task');
             await upsert(fixmes, ['fix','bug'], 'fixme', 'type: bug');
 
