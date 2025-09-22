@@ -1,4 +1,4 @@
-// TODO: написать тесты к auth заново, сейчас не работают
+// FIXME: Написать тесты к auth заново, сейчас не работают
 // import { Test, TestingModule } from '@nestjs/testing';
 // import { AuthService } from 'src/modules/auth/auth.service';
 // import { USERS_CLIENT, AUTH_CLIENT } from 'src/common/rmq/rmq.module';

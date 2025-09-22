@@ -1,12 +1,10 @@
 // TODO: Проверить работоспособность контроллера
 import { Response } from 'express';
 import {
+  BadRequestException,
   Body,
   Controller,
-  HttpStatus,
-  Logger,
   Post,
-  Res,
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -34,60 +32,44 @@ export class UsersController {
   @ApiOperation({ summary: 'Регестрация пользователя', operationId: '1' })
   @Post('/registration')
   async registrationUser(
-    @Body() userDto: CreateUserDto,
+    @Body() dto: CreateUserDto,
     @ReqId() reqId: string,
-    @Res() res: Response,
-  ) {
-    Logger.debug('users.registration', reqId);
+  ): Promise<{ message: string; payload?: any }> {
     const meta = { requestId: reqId };
+    const { password, ...userData } = dto;
+
+    // 1) создаём юзера (без пароля)
+    const created = await this.usersService.createUser(meta, userData);
+    if (created instanceof ApiError) {
+      throw new BadRequestException(created.message);
+    }
 
     try {
-      const { password, ...userData } = userDto;
-
-      const exists = await this.usersService.getByEmail(meta, {
-        email: userData.email,
+      // 2) создаём учётку (Auth сам хэширует)
+      const cred = await this.authService.createCredentials(meta, {
+        userId: created.id,
+        password,
       });
-
-      if (exists) {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json({ message: 'Пользователь с таким email уже существует' });
+      if (cred instanceof ApiError) {
+        // TODO: Компенсация, если нужно:
+        // await this.usersService.delete(meta, created.id);
+        throw new BadRequestException(cred.message);
       }
 
-      const user = await this.usersService.createUser(meta, userData);
-      if (user instanceof ApiError) {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .json({ message: user.message });
+      // 3) выдаём токены (и сохраняем refresh внутри Auth)
+      const tokens = await this.authService.generateTokens(meta, created);
+      if (tokens instanceof ApiError) {
+        throw new BadRequestException(tokens.message);
       }
 
-      const passwordHash = await this.authService.createHash(meta, password);
-      // TODO: Подумай нужно ли обрабтывать ошибку после создания хеша
-      // if (passwordHash instanceof ApiError) {
-      //   return res
-      //     .status(HttpStatus.BAD_REQUEST)
-      //     .json({ message: passwordHash.message });
-      // }
-      await this.authService.createCredentials(meta, {
-        userId: user.id,
-        passwordHash,
-      });
-
-      const tokens = await this.authService.generateTokens(meta, {
-        id: user.id,
-        email: user.email,
-      });
-
-      return res.status(HttpStatus.OK).json({
+      return {
         message: 'Congratulations, you can study',
-        payload: { user, tokens },
-      });
-    } catch (error: any) {
-      // здесь уже упали из rpc() — отдаём понятное сообщение
-      const msg = error?.message ?? 'Unknown error';
-      return res.status(HttpStatus.BAD_REQUEST).json({ message: msg });
+        payload: { user: created, tokens },
+      };
+    } catch (e: any) {
+      throw new BadRequestException(e?.message ?? 'Registration failed');
     }
   }
 
-  //TODO: реализовать едпоинт логина
+  //TODO: Реализовать едпоинт логина
 }

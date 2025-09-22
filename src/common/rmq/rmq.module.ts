@@ -1,4 +1,3 @@
-// TODO: разобраться какие аргументы очереди/соединения нужны
 import { Module, DynamicModule } from '@nestjs/common';
 import { ClientsModule, Transport, RmqOptions } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -16,8 +15,8 @@ export function buildRmqOptions(
 
   // DLX/TTL/лимит — брокерский «предохранитель» от захламления
   const dlx = cfg.get<string>('RMQ_DLX') ?? 'dlx';
-  const ttl = Number(cfg.get<string>('RMQ_MESSAGE_TTL_MS') ?? 30000);
-  const maxLen = Number(cfg.get<string>('RMQ_MAX_LENGTH') ?? 100000);
+  const ttl = Number(cfg.get<string>('RMQ_MESSAGE_TTL_MS'));
+  const maxLen = Number(cfg.get<string>('RMQ_MAX_LENGTH'));
 
   return {
     transport: Transport.RMQ,

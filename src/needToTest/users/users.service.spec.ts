@@ -1,4 +1,4 @@
-// TODO: написать тесты к users заново, сейчас не работают
+// FIXME: Написать тесты к users заново, сейчас не работают
 
 // import { Test, TestingModule } from '@nestjs/testing';
 // import { UsersService } from 'src/modules/users/users.service';

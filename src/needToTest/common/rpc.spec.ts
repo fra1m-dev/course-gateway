@@ -1,4 +1,4 @@
-// TODO: написать тесты к rpc заново, сейчас не работают
+// FIXME: Написать тесты к rpc заново, сейчас не работают
 // import type { ClientProxy } from '@nestjs/microservices';
 // import { of, throwError, NEVER, delay, timer as rxTimer } from 'rxjs';
 // import * as rx from 'rxjs';

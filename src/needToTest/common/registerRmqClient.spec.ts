@@ -1,4 +1,4 @@
-// TODO: написать тесты к registerRmqClient заново, сейчас не работают
+// FIXME: Написать тесты к registerRmqClient заново, сейчас не работают
 // import { jest } from '@jest/globals';
 // import type { ClientProxy } from '@nestjs/microservices';
 // import { of, throwError, NEVER, delay } from 'rxjs';
