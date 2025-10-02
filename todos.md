@@ -2,10 +2,10 @@
 | Filename | line # | TODO |
 |:------|:------:|:------|
 | [src/main.ts](src/main.ts#L1) | 1 | Все function вынести в отдельный файл (сервис) |
+| [src/main.ts](src/main.ts#L2) | 2 | Подумать нужен ли RpcToHttpExceptionFilter |
+| [src/contracts/patterns.ts](src/contracts/patterns.ts#L1) | 1 | под каждый сервис сделать отдельные патерны - вынести auth и тд |
 | [src/modules/auth/auth.service.ts](src/modules/auth/auth.service.ts#L1) | 1 | Проверить название патернов. Провить их логику в микросервисе auth |
-| [src/modules/users/users.controller.ts](src/modules/users/users.controller.ts#L1) | 1 | Проверить работоспособность контроллера |
-| [src/modules/users/users.controller.ts](src/modules/users/users.controller.ts#L54) | 54 | Компенсация, если нужно: |
-| [src/modules/users/users.controller.ts](src/modules/users/users.controller.ts#L74) | 74 | Реализовать едпоинт логина |
+| [src/modules/users/users.controller.ts](src/modules/users/users.controller.ts#L92) | 92 | доделать авторизацию |
 | [src/modules/users/users.service.ts](src/modules/users/users.service.ts#L1) | 1 | Проверить название патернов. Провить их логику в микросервисе users |
 
 ### FIXMEs

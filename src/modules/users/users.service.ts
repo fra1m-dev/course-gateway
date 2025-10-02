@@ -7,6 +7,7 @@ import { USERS_CLIENT } from 'src/common/rmq/rmq.module';
 import { rpc } from 'src/common/rpc/rpc.util';
 import { UserModel } from './models/user-model';
 import { PATTERNS } from 'src/contracts/patterns';
+import { AuthUserDto } from './dto/authUser.dto';
 
 @Injectable()
 export class UsersService {
@@ -14,16 +15,12 @@ export class UsersService {
 
   async getByEmail(
     meta: { requestId: string },
-    email: string,
-  ): Promise<UserModel | null> {
-    const exists = await rpc<UserModel | null>(
-      this.users,
-      PATTERNS.USERS_BY_EMAIL,
-      {
-        meta,
-        email,
-      },
-    );
+    authUserDto: Omit<AuthUserDto, 'password'>,
+  ): Promise<UserModel> {
+    const exists = await rpc<UserModel>(this.users, PATTERNS.USERS_BY_EMAIL, {
+      meta,
+      authUserDto,
+    });
 
     return exists;
   }
@@ -34,7 +31,7 @@ export class UsersService {
   ): Promise<UserModel> {
     const exists = await rpc<UserModel>(this.users, PATTERNS.USERS_CREATE, {
       meta,
-      dto: createUserDto,
+      createUserDto,
     });
 
     return exists;

@@ -19,6 +19,16 @@ export class AuthService {
   //   return await rpc<string>(this.auth, PATTERNS.AUTH_HASH, { meta, password });
   // }
 
+  async authByPassword(
+    meta: { requestId: string },
+    params: { userId: number; password: string },
+  ): Promise<Tokens> {
+    return await rpc<Tokens>(this.auth, PATTERNS.AUTH_LOGIN_BY_PASSWORD, {
+      meta,
+      ...params,
+    });
+  }
+
   async createCredentials(
     meta: { requestId: string },
     params: { userId: number; password: string },

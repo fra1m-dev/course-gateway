@@ -1,3 +1,4 @@
+// TODO: под каждый сервис сделать отдельные патерны - вынести auth и тд
 export const PATTERNS = {
   LESSONS_COUNT_TOTALS: 'lessons.countTotals',
 
@@ -7,6 +8,8 @@ export const PATTERNS = {
   AUTH_CREDENTIALS: 'auth.createCredentials',
   /** 'auth.generateTokens' */
   AUTH_GENERATE_TOKENS: 'auth.generateTokens',
+  /** */
+  AUTH_LOGIN_BY_PASSWORD: 'auth.authByPassword',
 
   /** 'users.applyQuizStats' */
   USERS_APPLY_QUIZ_STATS: 'users.applyQuizStats',
