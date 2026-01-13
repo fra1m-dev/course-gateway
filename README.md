@@ -1,98 +1,167 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Gateway (API)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+HTTP‑шлюз для платформы обучения. Берет на себя валидацию, авторизацию, работу с
+куками и проксирование запросов в микросервисы через RabbitMQ. Для скорости и
+защиты от дубликатов использует Redis.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## Быстрый старт
+Зависимости: Node.js, RabbitMQ, Redis, поднятые микросервисы (auth/users/courses/etc).
 
 ```bash
-$ npm install
+npm install
+npm run start:dev
 ```
 
-## Compile and run the project
+По умолчанию API доступно на `http://localhost:3001/api/v1`.
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+## Архитектура
+```
+Client -> HTTP (Nest) -> Controllers -> Services -> RMQ RPC -> микросервисы
+                     |                     |
+                     |                     +-> patterns: src/contracts/patterns.ts
+                     |
+                     +-> Redis (кэш, локи, сессии)
 ```
 
-## Run tests
+## Жизненный цикл запроса
+1) Генерация/проброс `x-request-id`
+2) CORS, Helmet, глобальная валидация DTO
+3) JWT‑авторизация (Authorization: Bearer ...)
+4) Controllers -> Services -> RPC (timeout + retries)
+5) Логи Pino + ответ
 
-```bash
-# unit tests
-$ npm run test
+## Модули
+- `users` — регистрация, логин, refresh/logout, профиль и статистика
+- `auth` — генерация/валидация токенов через RMQ
+- `courses` — CRUD курсов + загрузка PDF
+- `lessons` — создание и отдача контента уроков
+- `quizzes` — CRUD квизов
+- `analytics` — отправка результатов квизов + агрегации
+- `specializations` — справочник специализаций
+- `health` — liveness/readiness
+- `ws` — realtime‑модуль есть в коде, но сейчас не подключен в `src/app.module.ts`
 
-# e2e tests
-$ npm run test:e2e
+## API (v1)
+Базовый URL: `http://localhost:3001/api/v1`
 
-# test coverage
-$ npm run test:cov
+Users:
+- `POST /users/registration`
+- `POST /users/login`
+- `POST /users/refresh`
+- `POST /users/logout`
+- `GET /users/all`
+- `GET /users/me/stats`
+
+Courses:
+- `POST /courses/create`
+- `GET /courses/getAllCourses`
+- `PATCH /courses/update`
+- `DELETE /courses/delete`
+- `GET /courses/:id/file`
+
+Lessons:
+- `POST /lessons/create`
+- `GET /lessons/all`
+- `GET /lessons/:id/content`
+
+Quizzes:
+- `POST /quiz/create`
+- `GET /quiz/all`
+- `PATCH /quiz/update`
+- `DELETE /quiz/delete`
+
+Analytics:
+- `POST /quiz/submit`
+
+Specializations:
+- `GET /specializations/all`
+- `POST /specializations/create`
+- `PATCH /specializations/:id`
+
+Health:
+- `GET /health/live`
+- `GET /health/ready`
+
+## Авторизация и роли
+- Access‑токен в заголовке `Authorization: Bearer <token>`
+- Refresh‑токен хранится в httpOnly cookie `refreshToken`
+- Роли: `user`, `student`, `teacher`, `admin`
+- JWT проверяется по публичному ключу (RS256)
+
+## Кэш и Redis
+- `CacheHelper` использует Redis как write‑through для кэша и локов
+- HTTP‑кэш включен глобально, но кэширует только публичные GET на `/users/*`
+- Префикс ключей: `gw:`
+
+## RMQ и RPC
+- RPC‑паттерны описаны в `src/contracts/patterns.ts`
+- Helper `rpc` делает timeout + retry с backoff
+- Очереди (по умолчанию): `auth`, `users`, `ws`, `courses`, `specializations`,
+  `analytics`, `lessons`, `quizzes`
+  - для specializations используется переменная `RMQ_SPECIALIZATION_QUEUE`
+    (в общем реестре — `RMQ_SPECIALIZATIONS_QUEUE`)
+
+## Загрузка файлов
+- Только PDF
+- Сохраняются в `./uploads/courses` (относительно cwd)
+- Для корректного удаления/стриминга `UPLOAD_DIR` должен совпадать с местом хранения
+
+## Переменные окружения
+Файл `.env` читается в dev; в production env‑файлы не загружаются.
+
+| Переменная | Обязательная | Дефолт | Описание |
+| --- | --- | --- | --- |
+| `PORT` | нет | `3001` | порт API |
+| `API_PREFIX` | нет | `api` | префикс роутов |
+| `CORS_ORIGIN` | нет | `*` | список origin через запятую |
+| `RABBITMQ_URL` | да | — | адрес RabbitMQ |
+| `REDIS_PASSWORD` | да | — | пароль Redis |
+| `REDIS_PASSWORD_FILE` | нет | — | файл с паролем Redis |
+| `REDIS_HOST` | нет | `redis` | host Redis |
+| `REDIS_PORT` | нет | `6379` | port Redis |
+| `JWT_PUBLIC_KEY` | да* | — | публичный ключ RS256 |
+| `JWT_PUBLIC_KEY_PATH` | да* | — | путь к публичному ключу |
+| `UPLOAD_DIR` | нет | `/app/uploads/courses` | каталог файлов курсов |
+| `LOG_LEVEL` | нет | `info` | уровень логов |
+| `LOG_PRETTY` | нет | `false` | pretty‑лог в dev |
+| `SERVICE_NAME` | нет | `app` | имя сервиса в логах |
+| `SERVICE_VERSION` | нет | `0.0.0` | версия сервиса |
+| `RMQ_*_QUEUE` | нет | — | имена очередей (см. выше) |
+| `RMQ_DLX` | нет | `dlx` | dead‑letter exchange |
+| `RMQ_MESSAGE_TTL_MS` | нет | — | TTL сообщений |
+| `RMQ_MAX_LENGTH` | нет | — | max length очереди |
+
+\* нужен один из `JWT_PUBLIC_KEY` или `JWT_PUBLIC_KEY_PATH`.
+
+Пример:
+```env
+PORT=3001
+API_PREFIX=api
+RABBITMQ_URL=amqp://guest:guest@localhost:5672
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=secret123
+JWT_PUBLIC_KEY_PATH=./keys/jwt.pub
 ```
 
-## Deployment
+## Скрипты
+- `npm run start:dev` — запуск с watch
+- `npm run start:prod` — прод‑запуск из `dist`
+- `npm run build` — сборка
+- `npm run test` — юнит‑тесты
+- `npm run lint` — eslint
+- `npm run todos:md` — собрать TODO/FIXME
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Docker
+`Dockerfile` включает стадии `build`, `runner`, `dev`.
+Учти: контейнер экспонирует `3002`, а приложение по умолчанию слушает `3001`
+(поставь `PORT=3002`, если используешь стандартный Dockerfile).
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Полезные файлы
+- `src/main.ts` — точка входа
+- `src/app.module.ts` — композиция модулей
+- `src/app.service.ts` — bootstrap, middleware, CORS
+- `src/common/rmq/rmq.module.ts` — подключение RMQ‑клиентов
+- `src/common/redis/redis.service.ts` — кэш/локи
+- `src/common/secure/*` — guards и JWT
+- `todos.md` — текущие TODO/FIXME
