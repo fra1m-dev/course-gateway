@@ -143,11 +143,22 @@ export class CacheHelper {
   // ——— высокоуровневые помощники ———
 
   async writeUserCache(
-    user: { id: number; name: string; email: string; role: string },
+    user: {
+      id: number;
+      name: string;
+      email: string;
+      role: string;
+      sub?: number;
+    },
     ttlSec = 1800,
   ) {
-    await this.setJson(`user:id:${user.id}`, user, ttlSec);
-    await this.setJson(`user:email:${user.email.toLowerCase()}`, user, ttlSec);
+    const payload = { ...user, sub: user.sub ?? user.id };
+    await this.setJson(`user:id:${user.id}`, payload, ttlSec);
+    await this.setJson(
+      `user:email:${user.email.toLowerCase()}`,
+      payload,
+      ttlSec,
+    );
   }
 
   async markSession(jti: string, userId: number, ttlSec: number) {

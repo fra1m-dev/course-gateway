@@ -4,9 +4,10 @@ import { UsersService } from 'src/modules/users/users.service';
 import { AuthService } from 'src/modules/auth/auth.service';
 import type { ClientProxy } from '@nestjs/microservices';
 import { USERS_CLIENT, AUTH_CLIENT } from 'src/common/rmq/rmq.module';
+import { JwtAuthGuard } from 'src/common/secure/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/secure/guards/roles.quard';
 
 // 👇 импортируем guard-классы, чтобы переопределить их
-import { JwtAuthGuard, RolesGuard } from '@fra1m-dev/contracts-auth';
 
 describe('UsersController', () => {
   let module: TestingModule;

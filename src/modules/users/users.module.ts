@@ -8,5 +8,6 @@ import { RmqModule } from 'src/common/rmq/rmq.module';
   imports: [AuthModule, RmqModule.forUsers()],
   controllers: [UsersController],
   providers: [UsersService],
+  exports: [UsersService],
 })
 export class UsersModule {}

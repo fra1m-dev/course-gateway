@@ -1,8 +1,9 @@
-import { Role } from '@fra1m-dev/contracts-auth';
+import { Role } from 'src/common/decorators/roles-auth.decorator';
 
 export type UserModel = {
-  id: number;
+  sub: number;
   email: string;
   name: string;
   role: Role;
+  specializationId?: number | null;
 };
