@@ -17,6 +17,7 @@ import { SpecializationModule } from './modules/specializations/specializations.
 import { LessonsModule } from './modules/lessons/lessons.module';
 import { QuizzesModule } from './modules/quizzes/quizzes.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { VideosModule } from './modules/videos/videos.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     LessonsModule,
     QuizzesModule,
     AnalyticsModule,
+    VideosModule,
   ],
   providers: [
     AppBootstrapService,

@@ -66,4 +66,15 @@ export const PATTERNS = {
   QUIZZES_UPDATE_BY_USER_ID: 'quizzes.updateByUserId',
   /** 'quizzes.delete' */
   QUIZZES_DELETE: 'quizzes.delete',
+
+  /** 'videos.create' */
+  VIDEOS_CREATE: 'videos.create',
+  /** 'videos.getAll' */
+  VIDEOS_GET_ALL: 'videos.getAll',
+  /** 'videos.getById' */
+  VIDEOS_GET_BY_ID: 'videos.getById',
+  /** 'videos.update' */
+  VIDEOS_UPDATE: 'videos.update',
+  /** 'videos.delete' */
+  VIDEOS_DELETE: 'videos.delete',
 } as const;

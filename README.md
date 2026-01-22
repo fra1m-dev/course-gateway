@@ -38,6 +38,7 @@ Client -> HTTP (Nest) -> Controllers -> Services -> RMQ RPC -> микросер�
 - `quizzes` — CRUD квизов
 - `analytics` — отправка результатов квизов + агрегации
 - `specializations` — справочник специализаций
+- `videos` — загрузка, стриминг и скачивание видео
 - `health` — liveness/readiness
 - `ws` — realtime‑модуль есть в коде, но сейчас не подключен в `src/app.module.ts`
 
@@ -63,6 +64,15 @@ Lessons:
 - `POST /lessons/create`
 - `GET /lessons/all`
 - `GET /lessons/:id/content`
+
+Videos:
+- `POST /videos/create`
+- `GET /videos/all`
+- `GET /videos/:id`
+- `GET /videos/:id/stream`
+- `GET /videos/:id/download`
+- `PATCH /videos/:id`
+- `DELETE /videos/:id`
 
 Quizzes:
 - `POST /quiz/create`
@@ -97,7 +107,7 @@ Health:
 - RPC‑паттерны описаны в `src/contracts/patterns.ts`
 - Helper `rpc` делает timeout + retry с backoff
 - Очереди (по умолчанию): `auth`, `users`, `ws`, `courses`, `specializations`,
-  `analytics`, `lessons`, `quizzes`
+  `analytics`, `lessons`, `quizzes`, `videos`
   - для specializations используется переменная `RMQ_SPECIALIZATION_QUEUE`
     (в общем реестре — `RMQ_SPECIALIZATIONS_QUEUE`)
 
@@ -122,6 +132,7 @@ Health:
 | `JWT_PUBLIC_KEY` | да* | — | публичный ключ RS256 |
 | `JWT_PUBLIC_KEY_PATH` | да* | — | путь к публичному ключу |
 | `UPLOAD_DIR` | нет | `/app/uploads/courses` | каталог файлов курсов |
+| `VIDEO_UPLOAD_DIR` | нет | `/app/uploads/videos` | каталог файлов видео |
 | `LOG_LEVEL` | нет | `info` | уровень логов |
 | `LOG_PRETTY` | нет | `false` | pretty‑лог в dev |
 | `SERVICE_NAME` | нет | `app` | имя сервиса в логах |

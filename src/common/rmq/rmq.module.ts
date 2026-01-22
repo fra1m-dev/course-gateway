@@ -10,6 +10,7 @@ export const SPECIALIZATIONS_CLIENT = 'SPECIALIZATIONS_CLIENT';
 export const ANALYTICS_CLIENT = 'ANALYTICS_CLIENT';
 export const LESSONS_CLIENT = 'LESSONS_CLIENT';
 export const QUIZZES_CLIENT = 'QUIZZES_CLIENT';
+export const VIDEOS_CLIENT = 'VIDEOS_CLIENT';
 
 export function buildRmqOptions(
   cfg: ConfigService,
@@ -86,6 +87,11 @@ export class RmqModule {
       'RMQ_QUIZZES_QUEUE',
       'quizzes',
     );
+    const videos = registerRmqClient(
+      VIDEOS_CLIENT,
+      'RMQ_VIDEOS_QUEUE',
+      'videos',
+    );
 
     return {
       module: RmqModule,
@@ -99,6 +105,7 @@ export class RmqModule {
         analytics,
         lessons,
         quizzes,
+        videos,
       ],
       exports: [
         auth,
@@ -109,6 +116,7 @@ export class RmqModule {
         analytics,
         lessons,
         quizzes,
+        videos,
       ],
     };
   }
@@ -203,6 +211,19 @@ export class RmqModule {
       module: RmqModule,
       imports: [ConfigModule, quizzes],
       exports: [quizzes],
+    };
+  }
+
+  static forVideos(): DynamicModule {
+    const videos = registerRmqClient(
+      VIDEOS_CLIENT,
+      'RMQ_VIDEOS_QUEUE',
+      'videos',
+    );
+    return {
+      module: RmqModule,
+      imports: [ConfigModule, videos],
+      exports: [videos],
     };
   }
 }
